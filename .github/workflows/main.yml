@@ -1,0 +1,22 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  gradle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Gradle Build
+        run: |
+          ./gradlew build -x test
+      - name: Run Scripts
+        run: |
+          ./gradlew test
+          ./tempto-examples/bin/run_on_docker.sh --thread-count 2 -x failing
+          CONFIG_FILE=tempto-configuration-read-only.yaml ./tempto-examples/bin/run_on_docker.sh --thread-count 2 -g in_memory
+          CONFIG_FILE=tempto-configuration-no-db.yaml ./tempto-examples/bin/run_on_docker.sh --thread-count 2 -g ssh
+          CONFIG_FILE=tempto-configuration-invalid-ssh-and-psql.yaml ./tempto-examples/bin/run_on_docker.sh --thread-count 2 -g in_memory
